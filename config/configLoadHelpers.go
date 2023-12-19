@@ -222,6 +222,9 @@ func readConfigInto(dest any, location string, opts *CmdEnv) (string, error) {
 	}
 	// the hash is now the MD5 of the config file
 	hash := hex.EncodeToString(h.Sum(nil))
+	if mainConfig, ok := dest.(*configContents); ok {
+		fmt.Printf("\ntelemetry config without defaults %+v\n", mainConfig.Telemetry)
+	}
 
 	// don't apply options and defaults if we're not given any
 	if opts == nil {
@@ -231,6 +234,9 @@ func readConfigInto(dest any, location string, opts *CmdEnv) (string, error) {
 	// now we've got the config, apply defaults to zero values
 	if err := defaults.Set(dest); err != nil {
 		return hash, fmt.Errorf("readConfigInto unable to apply defaults: %w", err)
+	}
+	if mainConfig, ok := dest.(*configContents); ok {
+		fmt.Printf("telemetry config with defaults %+v\n", mainConfig.Telemetry)
 	}
 
 	// apply command line options

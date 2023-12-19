@@ -2,4 +2,12 @@ General:
   ConfigurationVersion: 2
   MinRefineryVersion: v2.0
 
+RefineryTelemetry:
+  AddRuleReasonToTrace: true # default is false
+  AddSpanCountToRoot: false # default is true
+  AddCountsToRoot: true # default is false
+  AddHostMetadataToTrace: false # default is true
 
+Logger:
+    Type: stdout
+    Level: info
