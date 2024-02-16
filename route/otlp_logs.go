@@ -9,10 +9,10 @@ import (
 	huskyotlp "github.com/honeycombio/husky/otlp"
 	"github.com/honeycombio/refinery/types"
 
-	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
+	collectorlogs "go.opentelemetry.io/proto/otlp/collector/logs/v1"
 )
 
-func (r *Router) postOTLPTrace(w http.ResponseWriter, req *http.Request) {
+func (r *Router) postOTLPLogs(w http.ResponseWriter, req *http.Request) {
 	ri := huskyotlp.GetRequestInfoFromHttpHeaders(req.Header)
 
 	if !r.Config.IsAPIKeyValid(ri.ApiKey) {
@@ -21,7 +21,7 @@ func (r *Router) postOTLPTrace(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := ri.ValidateTracesHeaders(); err != nil {
+	if err := ri.ValidateLogsHeaders(); err != nil {
 		if errors.Is(err, huskyotlp.ErrInvalidContentType) {
 			r.handlerReturnWithError(w, ErrInvalidContentType, err)
 		} else {
@@ -30,46 +30,46 @@ func (r *Router) postOTLPTrace(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := huskyotlp.TranslateTraceRequestFromReader(req.Body, ri)
+	result, err := huskyotlp.TranslateLogsRequestFromReader(req.Body, ri)
 	if err != nil {
 		r.handlerReturnWithError(w, ErrUpstreamFailed, err)
 		return
 	}
 
-	if err := processTraceRequest(req.Context(), r, result.Batches, ri.ApiKey); err != nil {
+	if err := processLogsRequest(req.Context(), r, result.Batches, ri.ApiKey); err != nil {
 		r.handlerReturnWithError(w, ErrUpstreamFailed, err)
 	}
 }
 
-type TraceServer struct {
+type LogsServer struct {
 	router *Router
-	collectortrace.UnimplementedTraceServiceServer
+	collectorlogs.UnimplementedLogsServiceServer
 }
 
-func NewTraceServer(router *Router) *TraceServer {
-	traceServer := TraceServer{router: router}
-	return &traceServer
+func NewLogsServer(router *Router) *LogsServer {
+	logsServer := LogsServer{router: router}
+	return &logsServer
 }
 
-func (t *TraceServer) Export(ctx context.Context, req *collectortrace.ExportTraceServiceRequest) (*collectortrace.ExportTraceServiceResponse, error) {
+func (t *LogsServer) Export(ctx context.Context, req *collectorlogs.ExportLogsServiceRequest) (*collectorlogs.ExportLogsServiceResponse, error) {
 	ri := huskyotlp.GetRequestInfoFromGrpcMetadata(ctx)
-	if err := ri.ValidateTracesHeaders(); err != nil {
+	if err := ri.ValidateLogsHeaders(); err != nil {
 		return nil, huskyotlp.AsGRPCError(err)
 	}
 
-	result, err := huskyotlp.TranslateTraceRequest(req, ri)
+	result, err := huskyotlp.TranslateLogsRequest(req, ri)
 	if err != nil {
 		return nil, huskyotlp.AsGRPCError(err)
 	}
 
-	if err := processTraceRequest(ctx, t.router, result.Batches, ri.ApiKey); err != nil {
+	if err := processLogsRequest(ctx, t.router, result.Batches, ri.ApiKey); err != nil {
 		return nil, huskyotlp.AsGRPCError(err)
 	}
 
-	return &collectortrace.ExportTraceServiceResponse{}, nil
+	return &collectorlogs.ExportLogsServiceResponse{}, nil
 }
 
-func processTraceRequest(
+func processLogsRequest(
 	ctx context.Context,
 	router *Router,
 	batches []huskyotlp.Batch,

@@ -39,6 +39,7 @@ import (
 	"github.com/honeycombio/refinery/transmit"
 	"github.com/honeycombio/refinery/types"
 
+	collectorlogs "go.opentelemetry.io/proto/otlp/collector/logs/v1"
 	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 )
 
@@ -224,9 +225,9 @@ func (r *Router) LnS(incomingOrPeer string) {
 				Timeout:               time.Duration(grpcConfig.KeepAliveTimeout),
 			}),
 		}
-		traceServer := NewTraceServer(r)
 		r.grpcServer = grpc.NewServer(serverOpts...)
-		collectortrace.RegisterTraceServiceServer(r.grpcServer, traceServer)
+		collectortrace.RegisterTraceServiceServer(r.grpcServer, NewTraceServer(r))
+		collectorlogs.RegisterLogsServiceServer(r.grpcServer, NewLogsServer(r))
 		grpc_health_v1.RegisterHealthServer(r.grpcServer, r)
 		go r.grpcServer.Serve(l)
 	}
@@ -907,6 +908,10 @@ func (r *Router) AddOTLPMuxxer(muxxer *mux.Router) {
 	otlpMuxxer.Use(r.apiKeyChecker)
 
 	// handle OTLP trace requests
-	otlpMuxxer.HandleFunc("/traces", r.postOTLP).Name("otlp")
-	otlpMuxxer.HandleFunc("/traces/", r.postOTLP).Name("otlp")
+	otlpMuxxer.HandleFunc("/traces", r.postOTLPTrace).Name("otlp")
+	otlpMuxxer.HandleFunc("/traces/", r.postOTLPTrace).Name("otlp")
+
+	// handle OTLP logs requests
+	otlpMuxxer.HandleFunc("/logs", r.postOTLPLogs).Name("otlp")
+	otlpMuxxer.HandleFunc("/logs/", r.postOTLPLogs).Name("otlp")
 }
