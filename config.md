@@ -1,7 +1,7 @@
 # Honeycomb Refinery Configuration Documentation
 
 This is the documentation for the configuration file for Honeycomb's Refinery.
-It was automatically generated on 2023-12-04 at 22:34:13 UTC.
+It was automatically generated on 2024-03-11 at 14:44:30 UTC.
 
 ## The Config file
 
@@ -258,7 +258,11 @@ TraceTimeout is the duration to wait before making the trace decision on an inco
 
 A long timer; it represents the outside boundary of how long to wait before making the trace decision about an incomplete trace.
 Normally trace decisions (send or drop) are made when the root span arrives.
-Sometimes the root span never arrives (for example, due to crashes) and this timer ensures sending a trace even without having received the root span.
+Sometimes the root span never arrives (for example, due to crashes).
+Once this timer fires, Refinery will make a trace decision based on the spans that have arrived so far.
+This ensures sending a trace even when the root span never arrives.
+After the trace decision has been made, Refinery retains a record of that decision for a period of time.
+When additional spans (including the root span) arrive, they will be kept or dropped based on the original decision.
 If particularly long-lived traces are present in your data, then you should increase this timer.
 Note that this increase will also increase the memory requirements for Refinery.
 
@@ -672,11 +676,11 @@ If this value is specified, then Refinery will use the first IPV6 unicast addres
 Peers is the list of peers to use when Type is "file", excluding self.
 
 This list is ignored when Type is "redis".
-The format is a list of strings of the form "host:port".
+The format is a list of strings of the form "scheme://host:port".
 
 - Not eligible for live reload.
 - Type: `stringarray`
-- Example: `192.168.1.11:8081,192.168.1.12:8081`
+- Example: `http://192.168.1.11:8081,http://192.168.1.12:8081`
 
 ## Redis Peer Management
 
@@ -966,6 +970,7 @@ If `false`, then the gRPC server is not started and no gRPC traffic is accepted.
 
 - Not eligible for live reload.
 - Type: `bool`
+- Default: `true`
 
 ### `ListenAddr`
 

@@ -178,7 +178,7 @@ This value is available to the rules-based sampler, making it possible to write 
 If `true` and `AddCountsToRoot` is set to false, then Refinery will add `meta.span_count` to the root span.
 
 - Eligible for live reload.
-- Type: `bool`
+- Type: `defaulttrue`
 - Default: `true`
 
 ### `AddCountsToRoot`
@@ -201,7 +201,7 @@ If `true`, then Refinery will ignore the `AddSpanCountToRoot` setting and add th
 If `true`, then Refinery will add the following tag to all traces: - `meta.refinery.local_hostname`: the hostname of the Refinery node
 
 - Eligible for live reload.
-- Type: `bool`
+- Type: `defaulttrue`
 - Default: `true`
 
 ## Traces
@@ -237,7 +237,11 @@ By default, this setting uses the `DefaultBatchTimeout` in `libhoney` as its val
 
 A long timer; it represents the outside boundary of how long to wait before making the trace decision about an incomplete trace.
 Normally trace decisions (send or drop) are made when the root span arrives.
-Sometimes the root span never arrives (for example, due to crashes) and this timer ensures sending a trace even without having received the root span.
+Sometimes the root span never arrives (for example, due to crashes).
+Once this timer fires, Refinery will make a trace decision based on the spans that have arrived so far.
+This ensures sending a trace even when the root span never arrives.
+After the trace decision has been made, Refinery retains a record of that decision for a period of time.
+When additional spans (including the root span) arrive, they will be kept or dropped based on the original decision.
 If particularly long-lived traces are present in your data, then you should increase this timer.
 Note that this increase will also increase the memory requirements for Refinery.
 
@@ -398,7 +402,7 @@ The sample rate is controlled by the `SamplerThroughput` setting.
 The sampler used throttles the rate of logs sent to Honeycomb from any given source within Refinery -- it should effectively limit the rate of redundant messages.
 
 - Not eligible for live reload.
-- Type: `bool`
+- Type: `defaulttrue`
 - Default: `true`
 
 ### `SamplerThroughput`
@@ -657,11 +661,11 @@ If this value is specified, then Refinery will use the first IPV6 unicast addres
 `Peers` is the list of peers to use when Type is "file", excluding self.
 
 This list is ignored when Type is "redis".
-The format is a list of strings of the form "host:port".
+The format is a list of strings of the form "scheme://host:port".
 
 - Not eligible for live reload.
 - Type: `stringarray`
-- Example: `192.168.1.11:8081,192.168.1.12:8081`
+- Example: `http://192.168.1.11:8081,http://192.168.1.12:8081`
 
 ## Redis Peer Management
 
@@ -899,7 +903,7 @@ If it costs money to transmit data between Refinery instances (for example, when
 The option to disable it is provided as an escape hatch for deployments that value lower CPU utilization over data transfer costs.
 
 - Not eligible for live reload.
-- Type: `bool`
+- Type: `defaulttrue`
 - Default: `true`
 
 ### `AdditionalAttributes`
@@ -951,7 +955,8 @@ A trace without a `parent_id` is assumed to be a root span.
 If `false`, then the gRPC server is not started and no gRPC traffic is accepted.
 
 - Not eligible for live reload.
-- Type: `bool`
+- Type: `defaulttrue`
+- Default: `true`
 
 ### `ListenAddr`
 

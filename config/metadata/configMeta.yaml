@@ -209,7 +209,7 @@ groups:
           the behavior of your Refinery installation.
 
       - name: AddSpanCountToRoot
-        type: bool
+        type: defaulttrue
         valuetype: nondefault
         default: true
         reload: true
@@ -243,7 +243,7 @@ groups:
           - `meta.event_count`: the number of honeycomb events on the trace
 
       - name: AddHostMetadataToTrace
-        type: bool
+        type: defaulttrue
         valuetype: nondefault
         default: true
         reload: true
@@ -490,7 +490,7 @@ groups:
       - name: SamplerEnabled
         v1group: HoneycombLogger
         v1name: LoggerSamplerEnabled
-        type: bool
+        type: defaulttrue
         valuetype: nondefault
         default: true
         reload: false
@@ -816,15 +816,15 @@ groups:
         v1name: Peers
         type: stringarray
         valuetype: stringarray
-        example: "192.168.1.11:8081,192.168.1.12:8081"
+        example: "http://192.168.1.11:8081,http://192.168.1.12:8081"
         reload: false
         validations:
           - type: elementType
-            arg: hostport
+            arg: url
         summary: is the list of peers to use when Type is "file", excluding self.
         description: >
           This list is ignored when Type is "redis". The format is a list of
-          strings of the form "host:port".
+          strings of the form "scheme://host:port".
 
   - name: RedisPeerManagement
     title: "Redis Peer Management"
@@ -1152,7 +1152,7 @@ groups:
           increase this value.
 
       - name: CompressPeerCommunication
-        type: bool
+        type: defaulttrue
         default: true
         valuetype: nondefault
         reload: false
@@ -1257,10 +1257,10 @@ groups:
       receive OpenTelemetry data in gRPC format.
     fields:
       - name: Enabled
-        type: bool
+        type: defaulttrue
         valuetype: conditional
         extra: "nonempty GRPCListenAddr"
-        default: false
+        default: true
         reload: false
         summary: specifies whether the gRPC server is enabled.
         description: >
